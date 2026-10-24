@@ -325,19 +325,14 @@ class AbyssLord extends Enemy {
       let name = 'idle', i = 0;
       if (this.state === 'transform') name = 'transform';
       else if (this.state.startsWith('claw')) { name = 'attack'; i = this.state === 'clawWindup' ? 0 : 1; }
-      else if (this.state.startsWith('cast')) {
-        name = this.sprite.cast ? 'cast' : 'attack';
-        i = this.state === 'castWindup' ? 0 : 1;
-      }
-      else if (this.state === 'recover') {
-        name = this.recoverCast && this.sprite.cast ? 'cast' : 'attack';
-        i = 2;
-      }
+      else if (this.state.startsWith('cast')) { name = 'cast'; i = this.state === 'castWindup' ? 0 : 1; }
+      else if (this.state === 'recover') { name = this.recoverCast ? 'cast' : 'attack'; i = 2; }
       if (this.flashT > 0 && this.state !== 'transform') name = 'hurt';
       const frames = this.sprite[name] || this.sprite.idle;
       const sp = frames[Math.min(i, frames.length - 1)];
       // Normalize submitted images to same foot/head envelope, without runtime reads.
-      const h = 112, w = sp.w / sp.h * h;
+      const pulse = this.state === 'castWindup' ? 1 + Math.sin(this.stateT * 9) * 0.012 : 1;
+      const h = 112 * pulse, w = sp.w / sp.h * h;
       const bob = this.moving && this.phase === 1 ? Math.sin(this.t * 16) * 2 : 0;
       ctx.save(); ctx.translate(Math.round(this.cx), GROUND_Y + bob + castLift); ctx.scale(this.face, 1);
       ctx.drawImage(sp.img, -w * 0.55, -h, w, h); ctx.restore();
