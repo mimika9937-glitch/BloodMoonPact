@@ -21,16 +21,7 @@ const COMBO = [
 ];
 const COMBO_WINDOW = 0.35;
 
-const RUN_CYCLE = [
-  { index: 0, duration: 0.08 },
-  { index: 1, duration: 0.06 },
-  { index: 2, duration: 0.07 },
-  { index: 3, duration: 0.06 },
-  { index: 4, duration: 0.08 },
-  { index: 5, duration: 0.07 },
-  { index: 6, duration: 0.06 },
-  { index: 7, duration: 0.06 },
-];
+const RUN_CYCLE = Array.from({ length: 16 }, (_, i) => ({ index: i, duration: 0.02 }));
 const RUN_PERIOD = RUN_CYCLE.reduce((sum, f) => sum + f.duration, 0);
 
 const SKILLS = {
