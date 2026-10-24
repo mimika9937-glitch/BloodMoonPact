@@ -370,6 +370,16 @@ const CGView = {
     img.src = path;
     this.cache[path] = img;
   },
+  preload(path) {
+    if (!path) return Promise.resolve();
+    this.ensure(path);
+    const img = this.cache[path];
+    if (img.complete) return Promise.resolve();
+    return new Promise((resolve) => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    });
+  },
   update() {
     if (Input.wasPressed('Enter') || Input.wasPressed('Escape') || Input.wasPressed('Space')) {
       const cb = Game.cgView && Game.cgView.onClose;

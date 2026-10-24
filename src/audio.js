@@ -1,6 +1,6 @@
 const AUDIO_BGM = {
-  castle: { src: 'assets/audio/bgm_castle.ogg', volume: 0.65, preload: 'metadata' },
-  boss: { src: 'assets/audio/bgm_boss.mp3', volume: 0.22, preload: 'metadata' },
+  castle: { src: 'assets/audio/bgm_castle.ogg', volume: 0.65 },
+  boss: { src: 'assets/audio/bgm_boss.mp3', volume: 0.22 },
   ending: { src: 'assets/audio/bgm_ending.mp3', volume: 0.30 },
 };
 
@@ -71,7 +71,7 @@ const AudioSys = {
       for (const src of def.srcs) {
         for (let i = 0; i < (def.pool || 2); i++) {
           const el = new Audio(src);
-          el.preload = 'none';
+          el.preload = 'auto';
           el.volume = def.volume;
           list.push(el);
         }

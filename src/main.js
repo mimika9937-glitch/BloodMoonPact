@@ -50,6 +50,10 @@ const Game = {
       castleBg: 'assets/tiles/castle/green_background.png',
       castleTiles: 'assets/tiles/gothicvania/Old-dark-Castle-tileset-Files/PNG/old-dark-castle-interior-tileset.png',
       moon: 'assets/backgrounds/moon_pixel.png',
+      titleBg: 'assets/backgrounds/背景图1.png',
+      portraitCamilla: 'assets/portraits/吸血鬼立绘.png',
+      portraitLillian: 'assets/portraits/公主立绘.png',
+      portraitAbyss: 'assets/portraits/深渊领主立绘.png',
       halfCamilla: 'assets/portraits/half/camilla.png',
       halfLillian: 'assets/portraits/half/lillian.png',
       halfAbyss: 'assets/portraits/half/abyss.png',
@@ -62,6 +66,9 @@ const Game = {
       cornerTR: 'assets/ui/processed/corner_tr.png',
       cornerBL: 'assets/ui/processed/corner_bl.png',
       cornerBR: 'assets/ui/processed/corner_br.png',
+      rankS: 'assets/ui/processed/rank_s.png',
+      rankA: 'assets/ui/processed/rank_a.png',
+      rankB: 'assets/ui/processed/rank_b.png',
     };
     this.drawLoading(0, Object.keys(bootAssets).length);
     const bootEl = document.getElementById('boot');
@@ -73,6 +80,10 @@ const Game = {
     if (!frames.idle) frames.idle = [buildPixelSprite(null, ART_SCALE, '#7a1a36')];
     this.sprites.vampire = frames;
     this.sprites.boss = await loadFrameSet(BOSS_FRAMES, ART_SCALE, '#162027');
+    const cgPaths = typeof GALLERY_CGS !== 'undefined' ? GALLERY_CGS.map((c) => c.path) : [];
+    let cgDone = 0;
+    this.drawLoading(0, cgPaths.length, '正在加载剧情 CG…');
+    await Promise.all(cgPaths.map((p) => CGView.preload(p).then(() => this.drawLoading(++cgDone, cgPaths.length, '正在加载剧情 CG…'))));
     this.reset();
     this.scene = 'title';
     AudioSys.playBgm('ending');
@@ -85,19 +96,6 @@ const Game = {
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
-    this.loadDeferred();
-  },
-
-  loadDeferred() {
-    Assets.load({
-      titleBg: 'assets/backgrounds/背景图1.png',
-      portraitCamilla: 'assets/portraits/吸血鬼立绘.png',
-      portraitLillian: 'assets/portraits/公主立绘.png',
-      portraitAbyss: 'assets/portraits/深渊领主立绘.png',
-      rankS: 'assets/ui/processed/rank_s.png',
-      rankA: 'assets/ui/processed/rank_a.png',
-      rankB: 'assets/ui/processed/rank_b.png',
-    });
   },
 
   fit() {
@@ -744,7 +742,7 @@ const Game = {
       ctx.fillText(label, W / 2, H / 2 + 54);
     }
     ctx.fillStyle = '#8d7188'; ctx.font = `12px ${FONT}`;
-    ctx.fillText('首次进入需下载素材，点击画面播放音乐', W / 2, H / 2 + 80);
+    ctx.fillText('首次进入需下载全部素材（约 30MB），点击画面播放音乐', W / 2, H / 2 + 80);
   },
 };
 
