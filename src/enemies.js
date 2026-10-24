@@ -153,6 +153,13 @@ class HellBeast extends Enemy {
     this.cool = rand(0.6, 1.4);
     this.contactDmg = 10;
     this.parryable = false;
+    this.drainBled = false;
+  }
+
+  drainArrived(p) {
+    if (this.drainBled || this.dead || !p || p.dead || typeof p.bleed !== 'function') return;
+    this.drainBled = true;
+    p.bleed(3);
   }
 
   update(dt, game) {
@@ -166,9 +173,13 @@ class HellBeast extends Enemy {
     if (this.state !== 'fire') this.face = Math.sign(dx) || this.face;
     this.cool -= dt;
 
-    if (this.state === 'idle' && near && this.cool <= 0) { this.state = 'windup'; this.stateT = 0; }
+    if (this.state === 'idle' && near && this.cool <= 0) {
+      this.state = 'windup';
+      this.stateT = 0;
+      this.drainBled = false;
+    }
     else if (this.state === 'windup') {
-      if (Math.random() < 0.5) FX.drain(this.cx + this.face * rand(30, 60), this.y + rand(10, 40), 1);
+      if (Math.random() < 0.5) FX.drain(this.cx + this.face * rand(30, 60), this.y + rand(10, 40), 1, () => this.drainArrived(p));
       if (this.stateT > 0.65) {
         this.state = 'fire'; this.stateT = 0;
         game.projectiles.push(new Fireball(this.cx + this.face * 30, this.y + this.h * 0.32, this.face * 260));

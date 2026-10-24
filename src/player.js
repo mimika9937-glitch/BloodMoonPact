@@ -120,6 +120,15 @@ class Player {
 
   heal(n) { if (!this.dead) this.hp = Math.min(PLAYER.MAX_HP, this.hp + n); }
 
+  bleed(n) {
+    if (this.dead) return;
+    this.hp = Math.max(0, this.hp - n);
+    this.redT = Math.max(this.redT, 0.3);
+    FX.blood(this.cx, this.cy + 8, 5, 0.55);
+    FX.text(this.cx, this.y - 26, `流血 -${n}`, '#ff5577', 14);
+    if (this.hp <= 0) this.die();
+  }
+
   addShield(n) {
     if (this.dead) return;
     const before = this.shield;
