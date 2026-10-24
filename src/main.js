@@ -744,7 +744,7 @@ const Game = {
       ctx.fillText(label, W / 2, H / 2 + 54);
     }
     ctx.fillStyle = '#8d7188'; ctx.font = `12px ${FONT}`;
-    ctx.fillText('首次进入需下载素材，网络较慢时请稍候', W / 2, H / 2 + 80);
+    ctx.fillText('首次进入需下载素材，点击画面播放音乐', W / 2, H / 2 + 80);
   },
 };
 

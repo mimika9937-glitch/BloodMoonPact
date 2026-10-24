@@ -18,7 +18,26 @@
 </head>
 <body>
 <canvas id="game" width="960" height="540"></canvas>
-<div id="boot"><b>血 月 之 约</b><span>加载中…（首次进入需下载素材，请稍候）</span></div>
+<div id="boot"><b>血 月 之 约</b><span>加载中…（首次进入需下载素材，点击画面播放音乐）</span></div>
+<audio id="bgm-ending" src="assets/audio/bgm_ending.mp3" loop preload="auto"></audio>
+<script>
+(() => {
+  const el = document.getElementById('bgm-ending');
+  if (!el) return;
+  let muted = false;
+  try { muted = localStorage.getItem('bmp_mute') === '1'; } catch (e) { /* ignore */ }
+  if (muted) return;
+  el.volume = 0.3;
+  const start = () => { const p = el.play(); if (p) p.catch(() => {}); };
+  const p = el.play();
+  if (p) {
+    p.catch(() => {
+      window.addEventListener('pointerdown', start, { once: true });
+      window.addEventListener('keydown', start, { once: true });
+    });
+  }
+})();
+</script>
 <script charset="utf-8" src="src/util.js"></script>
 <script charset="utf-8" src="assets/sprites/frames/manifest.js"></script>
 <script charset="utf-8" src="assets/sprites/frames/boss/manifest.js"></script>

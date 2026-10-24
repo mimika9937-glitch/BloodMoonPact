@@ -52,10 +52,18 @@ const AudioSys = {
     try { this.muted = localStorage.getItem('bmp_mute') === '1'; } catch (e) { /* file:// may block storage */ }
 
     for (const [key, def] of Object.entries(AUDIO_BGM)) {
-      const el = new Audio(def.src);
+      const existing = document.getElementById('bgm-' + key);
+      const el = existing || new Audio(def.src);
       el.loop = true;
       el.preload = def.preload || 'auto';
-      el.volume = 0;
+      if (existing && !existing.paused) {
+        // boot screen already started this track before the game scripts finished
+        this.unlocked = true;
+        this.current = el;
+        this.currentKey = key;
+      } else {
+        el.volume = 0;
+      }
       this.bgmEls[key] = el;
     }
     for (const [name, def] of Object.entries(AUDIO_SFX)) {
