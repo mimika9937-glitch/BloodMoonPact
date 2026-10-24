@@ -13,6 +13,7 @@ class AbyssLord extends Enemy {
     this.cool = 1.2; this.summonT = 8;
     this.contactDmg = 10; this.parryable = true;
     this.moving = false; this.dustT = 0;
+    this.recoverCast = false;
     this.pendingSummons = [];
     this.dying = false; this.deathT = 0; this.deathMax = 2.2; this.deathFxT = 0;
   }
@@ -198,8 +199,10 @@ class AbyssLord extends Enemy {
         AudioSys.sfxPlay('fire', { rate: 0.85 });
         FX.ring(this.cx + this.face * 40, GROUND_Y - 42, 24, '#ff5577', 0.25);
         this.go('cast');
-      } else if ((this.state === 'claw' || this.state === 'cast') && this.stateT >= 0.3) this.go('recover');
-      else if (this.state === 'recover' && this.stateT >= 1.8) { this.go('idle'); this.cool = 0.5; }
+      } else if ((this.state === 'claw' || this.state === 'cast') && this.stateT >= 0.3) {
+        this.recoverCast = this.state === 'cast';
+        this.go('recover');
+      } else if (this.state === 'recover' && this.stateT >= 1.8) { this.go('idle'); this.cool = 0.5; }
     } else {
       if (this.summonT <= 0 && game.enemies.filter((e) => !e.dead).length < 3) {
         this.summonWave(2, game);
@@ -283,26 +286,60 @@ class AbyssLord extends Enemy {
       ctx.beginPath(); ctx.arc(0, 0, 84 + pulse * 10, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
+    let castLift = 0;
+    if (this.phase === 1) {
+      if (this.state === 'castWindup') castLift = -Math.min(10, this.stateT * 16);
+      else if (this.state === 'cast') castLift = -Math.max(0, 10 - this.stateT * 30);
+    }
     if (this.phase === 2 && this.state !== 'transform') {
-      let i = Math.floor(this.t * 8);
-      if (this.state === 'fireWindup') i = Math.min(5, Math.floor(this.stateT / 1.1 * 6));
-      else if (this.state === 'fire') i = 6 + Math.min(4, Math.floor(this.stateT / 0.75 * 5));
+      let i = Math.floor(this.t * 10);
+      let charge = 0;
+      if (this.state === 'fireWindup') {
+        charge = clamp(this.stateT / 1.1, 0, 1);
+        // 前 0.62 秒快速吸气（0→5 帧），之后低身蓄力，避免长时间定格
+        i = this.stateT < 0.62 ? Math.floor(this.stateT / 0.62 * 6) : 5;
+      } else if (this.state === 'fire') {
+        charge = 1;
+        i = this.stateT < 0.45 ? 6 + Math.floor(this.stateT / 0.45 * 5) : 10;
+      }
       const attack = this.state === 'fireWindup' || this.state === 'fire';
       const hover = Math.sin(this.t * 3) * 3;
-      Sheets.draw(ctx, attack ? 'demonAttack' : 'demonIdle', i, this.cx, this.y + this.h + 14 + hover, this.face, 1.15, false);
+      const lunge = this.state === 'fire' ? 6 : charge * 3;
+      Sheets.draw(ctx, attack ? 'demonAttack' : 'demonIdle', i, this.cx + this.face * lunge, this.y + this.h + 14 + hover, this.face, 1.15, false);
+      if (charge > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (let j = 0; j < 6; j++) {
+          const a = this.stateT * 3 + j * 1.047;
+          const rr = 46 - charge * 20;
+          const ex = this.cx + Math.cos(a) * rr;
+          const ey = this.y + this.h * 0.55 + Math.sin(a) * rr * 0.5;
+          ctx.fillStyle = `rgba(96,214,255,${0.22 + 0.5 * charge})`;
+          ctx.beginPath();
+          ctx.arc(ex, ey, 1.8 + charge * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     } else {
       let name = 'idle', i = 0;
       if (this.state === 'transform') name = 'transform';
       else if (this.state.startsWith('claw')) { name = 'attack'; i = this.state === 'clawWindup' ? 0 : 1; }
-      else if (this.state.startsWith('cast')) { name = 'attack'; i = this.state === 'castWindup' ? 0 : 1; }
-      else if (this.state === 'recover') { name = 'attack'; i = 2; }
+      else if (this.state.startsWith('cast')) {
+        name = this.sprite.cast ? 'cast' : 'attack';
+        i = this.state === 'castWindup' ? 0 : 1;
+      }
+      else if (this.state === 'recover') {
+        name = this.recoverCast && this.sprite.cast ? 'cast' : 'attack';
+        i = 2;
+      }
       if (this.flashT > 0 && this.state !== 'transform') name = 'hurt';
       const frames = this.sprite[name] || this.sprite.idle;
       const sp = frames[Math.min(i, frames.length - 1)];
       // Normalize submitted images to same foot/head envelope, without runtime reads.
       const h = 112, w = sp.w / sp.h * h;
       const bob = this.moving && this.phase === 1 ? Math.sin(this.t * 16) * 2 : 0;
-      ctx.save(); ctx.translate(Math.round(this.cx), GROUND_Y + bob); ctx.scale(this.face, 1);
+      ctx.save(); ctx.translate(Math.round(this.cx), GROUND_Y + bob + castLift); ctx.scale(this.face, 1);
       ctx.drawImage(sp.img, -w * 0.55, -h, w, h); ctx.restore();
     }
     if (this.phase === 1 && this.state === 'castWindup') {
@@ -313,8 +350,17 @@ class AbyssLord extends Enemy {
       ctx.fillStyle = '#ff5577';
       ctx.shadowColor = '#ff2d55'; ctx.shadowBlur = 16;
       ctx.beginPath();
-      ctx.arc(this.cx + this.face * 34, this.cy - 6, r, 0, Math.PI * 2);
+      ctx.arc(this.cx + this.face * 34, this.cy - 6 + castLift, r, 0, Math.PI * 2);
       ctx.fill();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let j = 0; j < 5; j++) {
+        const ang = this.stateT * 6 + j * 1.257;
+        const rr = 26 - Math.min(14, this.stateT * 10);
+        ctx.fillStyle = 'rgba(255,128,158,0.75)';
+        ctx.beginPath();
+        ctx.arc(this.cx + this.face * 34 + Math.cos(ang) * rr, this.cy - 6 + castLift + Math.sin(ang) * rr * 0.7, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
     if (dying) ctx.restore();
@@ -347,7 +393,7 @@ class BossFlame {
     ctx.fillStyle = glow;
     ctx.beginPath(); ctx.arc(0, 0, 100, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
-    Sheets.draw(ctx, 'demonBreath', Math.min(4, Math.floor(k * 5)), this.x, GROUND_Y, 1, scale, false);
+    Sheets.draw(ctx, 'demonBreath', Math.floor(k * 10) % 5, this.x, GROUND_Y, 1, scale, false);
     ctx.restore();
   }
 }

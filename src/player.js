@@ -584,10 +584,12 @@ class Player {
     this.squash = approach(this.squash, 0, dt * 2.2);
     let targetTilt = 0;
     if (this.state === 'run') {
-      const speed = Math.min(1, Math.abs(this.vx) / PLAYER.RUN);
-      this.runT = (this.runT + dt * speed) % RUN_PERIOD;
-      this.runFrame += dt * 14 * speed;
-      targetTilt = this.face * 0.06;
+      const speedK = Math.min(1, Math.abs(this.vx) / PLAYER.RUN);
+      // 步频跟随实际位移：每个 8 帧循环约走 92px，短腿也不会滑步
+      const cadence = clamp(Math.abs(this.vx) / 92, 2.2, 4.2);
+      this.runT = (this.runT + dt * cadence * RUN_PERIOD) % RUN_PERIOD;
+      this.runFrame += dt * 14 * speedK;
+      targetTilt = this.face * (0.035 + 0.045 * speedK);
       const step = Math.floor((this.runT / RUN_PERIOD) * 2);
       if (step !== this.runStep) {
         this.runStep = step;
@@ -620,10 +622,10 @@ class Player {
     let sx = 1 + this.squash * 0.8;
     let sy = 1 - this.squash;
     let bob = 0;
-    if (this.state === 'idle' && this.landT <= 0) bob = Math.sin(performance.now() / 400) > 0.2 ? -px : 0;
+    if (this.state === 'idle' && this.landT <= 0) bob = Math.sin(performance.now() / 480) * 1.6;
     if (this.state === 'run') {
       const phase = (this.runT / RUN_PERIOD) * Math.PI * 2;
-      bob = -Math.round(Math.abs(Math.sin(phase)) * 1.5) * px;
+      bob = -Math.abs(Math.sin(phase)) * 3;
     }
     sx = Math.round(sx * drawW / px / 2) * 2 * px / drawW;
     sy = Math.round(sy * drawH / px) * px / drawH;
@@ -635,8 +637,8 @@ class Player {
       ctx.fill();
     }
 
-    const ox = Math.round(this.cx / px) * px;
-    const oy = Math.round((this.feet + bob - this.lift) / px) * px;
+    const ox = Math.round(this.cx);
+    const oy = Math.round(this.feet + bob - this.lift);
     ctx.save();
     ctx.translate(ox, oy);
     if (this.tilt) ctx.rotate(this.tilt);
