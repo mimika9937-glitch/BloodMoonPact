@@ -64,6 +64,8 @@ const Game = {
       cornerBR: 'assets/ui/processed/corner_br.png',
     };
     this.drawLoading(0, Object.keys(bootAssets).length);
+    const bootEl = document.getElementById('boot');
+    if (bootEl) bootEl.remove();
     await Assets.load(bootAssets, (done, total) => this.drawLoading(done, total));
     this.drawLoading(1, 1, '正在准备角色动画…');
     await Sheets.load();

@@ -63,7 +63,7 @@ const AudioSys = {
       for (const src of def.srcs) {
         for (let i = 0; i < (def.pool || 2); i++) {
           const el = new Audio(src);
-          el.preload = 'auto';
+          el.preload = 'none';
           el.volume = def.volume;
           list.push(el);
         }
