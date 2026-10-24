@@ -595,7 +595,9 @@ class Player {
 
   frameMetrics(frame) {
     if (this.state === 'run' || this.state === 'dash') {
-      const drawH = 62 * ART_SCALE;
+      // 跑步帧与站立帧同高，避免一跑起来显得变大
+      const ref = (this.sprite.idle && this.sprite.idle[0]) || frame;
+      const drawH = ref.h;
       const k = drawH / frame.h;
       return { w: frame.w * k, h: drawH, left: FACE_FROM_CENTER - frame.face * k };
     }
