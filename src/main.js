@@ -46,15 +46,10 @@ const Game = {
     Input.init();
     AudioSys.init();
     Gallery.init();
-    this.drawLoading();
-    await Assets.load({
+    const bootAssets = {
       castleBg: 'assets/tiles/castle/green_background.png',
       castleTiles: 'assets/tiles/gothicvania/Old-dark-Castle-tileset-Files/PNG/old-dark-castle-interior-tileset.png',
       moon: 'assets/backgrounds/moon_pixel.png',
-      titleBg: 'assets/backgrounds/背景图1.png',
-      portraitCamilla: 'assets/portraits/吸血鬼立绘.png',
-      portraitLillian: 'assets/portraits/公主立绘.png',
-      portraitAbyss: 'assets/portraits/深渊领主立绘.png',
       halfCamilla: 'assets/portraits/half/camilla.png',
       halfLillian: 'assets/portraits/half/lillian.png',
       halfAbyss: 'assets/portraits/half/abyss.png',
@@ -67,10 +62,10 @@ const Game = {
       cornerTR: 'assets/ui/processed/corner_tr.png',
       cornerBL: 'assets/ui/processed/corner_bl.png',
       cornerBR: 'assets/ui/processed/corner_br.png',
-      rankS: 'assets/ui/processed/rank_s.png',
-      rankA: 'assets/ui/processed/rank_a.png',
-      rankB: 'assets/ui/processed/rank_b.png',
-    });
+    };
+    this.drawLoading(0, Object.keys(bootAssets).length);
+    await Assets.load(bootAssets, (done, total) => this.drawLoading(done, total));
+    this.drawLoading(1, 1, '正在准备角色动画…');
     await Sheets.load();
     const frames = typeof VAMPIRE_FRAMES !== 'undefined' ? await loadFrameSet(VAMPIRE_FRAMES, ART_SCALE, '#7a1a36') : {};
     if (!frames.idle) frames.idle = [buildPixelSprite(null, ART_SCALE, '#7a1a36')];
@@ -88,6 +83,19 @@ const Game = {
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
+    this.loadDeferred();
+  },
+
+  loadDeferred() {
+    Assets.load({
+      titleBg: 'assets/backgrounds/背景图1.png',
+      portraitCamilla: 'assets/portraits/吸血鬼立绘.png',
+      portraitLillian: 'assets/portraits/公主立绘.png',
+      portraitAbyss: 'assets/portraits/深渊领主立绘.png',
+      rankS: 'assets/ui/processed/rank_s.png',
+      rankA: 'assets/ui/processed/rank_a.png',
+      rankB: 'assets/ui/processed/rank_b.png',
+    });
   },
 
   fit() {
@@ -715,12 +723,26 @@ const Game = {
     ctx.fillText('AD 移动 · W 交互 · S 下跳 · 空格二段跳 · J 连击 · K 冲刺 · L 爆发 · I 血月 · F 格挡/弹反 · Tab 背包', W / 2, H / 2 + 52);
   },
 
-  drawLoading() {
+  drawLoading(done = 0, total = 0, label = '') {
     const ctx = this.ctx;
     ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
     ctx.fillStyle = '#07030a'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#f3dce4'; ctx.font = `20px ${FONT}`; ctx.textAlign = 'center';
-    ctx.fillText('加载中……', W / 2, H / 2);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ff5577'; ctx.font = `bold 34px ${FONT}`;
+    ctx.fillText('血 月 之 约', W / 2, H / 2 - 48);
+    ctx.fillStyle = '#f3dce4'; ctx.font = `16px ${FONT}`;
+    ctx.fillText(total ? `加载中… ${done} / ${total}` : '加载中…', W / 2, H / 2 + 2);
+    const bw = 320, bh = 6, bx = W / 2 - bw / 2, by = H / 2 + 22;
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#ff5577';
+    ctx.fillRect(bx, by, bw * (total ? Math.min(1, done / total) : 0), bh);
+    if (label) {
+      ctx.fillStyle = '#b18aab'; ctx.font = `12px ${FONT}`;
+      ctx.fillText(label, W / 2, H / 2 + 54);
+    }
+    ctx.fillStyle = '#8d7188'; ctx.font = `12px ${FONT}`;
+    ctx.fillText('首次进入需下载素材，网络较慢时请稍候', W / 2, H / 2 + 80);
   },
 };
 

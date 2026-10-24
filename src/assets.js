@@ -1,11 +1,19 @@
 const Assets = {
   images: {},
 
-  load(list) {
-    return Promise.all(Object.entries(list).map(([key, src]) => new Promise((resolve) => {
+  load(list, onProgress) {
+    const entries = Object.entries(list);
+    let done = 0;
+    return Promise.all(entries.map(([key, src]) => new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => { this.images[key] = img; resolve(); };
-      img.onerror = () => { console.warn('素材加载失败：' + src); resolve(); };
+      const finish = (ok) => {
+        if (ok) this.images[key] = img;
+        done++;
+        if (onProgress) onProgress(done, entries.length);
+        resolve();
+      };
+      img.onload = () => finish(true);
+      img.onerror = () => { console.warn('素材加载失败：' + src); finish(false); };
       img.src = src;
     })));
   },
