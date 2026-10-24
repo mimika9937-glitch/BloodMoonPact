@@ -392,7 +392,8 @@ class Player {
     this.vx = this.face * SKILLS.K.speed;
     this.vy = 0;
     if (Math.random() < 0.8) FX.bat(this.cx + rand(-14, 14), this.cy + rand(-28, 28), -this.face * rand(30, 120), 0.35);
-    FX.ghost(this.frame(), this.cx, this.feet, this.face);
+    const frame = this.frame();
+    FX.ghost(frame, this.cx, this.feet, this.face, this.frameMetrics(frame));
     if (this.stateT >= SKILLS.K.dur) {
       this.vx = this.face * PLAYER.RUN;
       for (let i = 0; i < 6; i++) FX.bat(this.cx + rand(-10, 10), this.cy + rand(-25, 25), this.face * rand(150, 350), 0.4);
@@ -592,6 +593,15 @@ class Player {
     this.tilt += (targetTilt - this.tilt) * Math.min(1, dt * 16);
   }
 
+  frameMetrics(frame) {
+    if (this.state === 'run' || this.state === 'dash') {
+      const drawH = 62 * ART_SCALE;
+      const k = drawH / frame.h;
+      return { w: frame.w * k, h: drawH, left: FACE_FROM_CENTER - frame.face * k };
+    }
+    return { w: frame.w, h: frame.h, left: FACE_FROM_CENTER - frame.face };
+  }
+
   draw(ctx) {
     if (this.state === 'dash') {
       for (let i = 0; i < 5; i++) {
@@ -601,15 +611,9 @@ class Player {
     }
     const frame = this.frame();
     const px = ART_SCALE;
-    let drawW = frame.w, drawH = frame.h;
-    let left = frameLeft(frame);
-    if (this.state === 'run') {
-      // Normalize every run frame to the same height while preserving its aspect.
-      drawH = 62 * ART_SCALE;
-      const k = drawH / frame.h;
-      drawW = frame.w * k;
-      left = FACE_FROM_CENTER - frame.face * k;
-    }
+    const metrics = this.frameMetrics(frame);
+    let drawW = metrics.w, drawH = metrics.h;
+    let left = metrics.left;
     let sx = 1 + this.squash * 0.8;
     let sy = 1 - this.squash;
     let bob = 0;

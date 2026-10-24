@@ -165,7 +165,10 @@ const FX = {
     });
   },
 
-  ghost(sp, x, y, flip) {
+  ghost(sp, x, y, flip, metrics) {
+    const left = metrics ? metrics.left : frameLeft(sp);
+    const gw = metrics ? metrics.w : sp.w;
+    const gh = metrics ? metrics.h : sp.h;
     this.add({
       t: 0, life: 0.25, x, y,
       draw: (ctx, e) => {
@@ -173,7 +176,7 @@ const FX = {
         ctx.save();
         ctx.translate(e.x, e.y);
         ctx.scale(flip, 1);
-        ctx.drawImage(sp.red, frameLeft(sp), -sp.h, sp.w, sp.h);
+        ctx.drawImage(sp.red, left, -gh, gw, gh);
         ctx.restore();
         ctx.globalAlpha = 1;
       },
